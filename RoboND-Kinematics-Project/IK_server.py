@@ -11,6 +11,7 @@
 
 # import modules
 import rospy
+
 import tf
 from kuka_arm.srv import *
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
