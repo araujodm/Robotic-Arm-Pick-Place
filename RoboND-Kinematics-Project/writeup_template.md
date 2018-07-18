@@ -1,6 +1,6 @@
 ## Project: Kinematics Pick & Place
 
-1. Set up your ROS Workspace.
+1. Setup your ROS Workspace.
 
 It was done by creating the /catkin_ws. As mentioned during the course, catkin is the official build system of ROS.
 
@@ -99,7 +99,7 @@ Considering there is a distance of 0.303m between WC and EE (End-Effector):
 
     
 
-6. Fill in the `IK_server.py` with your Inverse Kinematics code. 
+6. Fill in th_e `IK_server.py` with your Inverse Kinematics code. 
 
 Here is my code:
 https://github.com/araujodm/RoboND-Kinematics-Project/blob/patch-1/IK_server.py
