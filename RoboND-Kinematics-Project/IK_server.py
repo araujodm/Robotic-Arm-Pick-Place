@@ -56,9 +56,9 @@ def handle_calculate_IK(req):
         # Define additional symbols for roll, pitch and yaw for the end-effector orientation
         r, p, y = symbols('r p y')
         # Rotation Matrices for x,y and z consisting of end effector orientation parameters
-        R_x = Matrix([[1, 0, 0], [0, cos(r), -sin(r)], [0, sin(r), cos(r)]])
-        R_y = Matrix([[cos(p), 0, sin(p)], [0, 1, 0], [-sin(p), 0, cos(p)]])
-        R_z = Matrix([[cos(y), -sin(y), 0], [sin(y), cos(y), 0], [0, 0, 1]])
+        R_x = Matrix([[1, 0, 0], [0, cos(r), -sin(r)], [0, sin(r), cos(r)]]) #ROLL
+        R_y = Matrix([[cos(p), 0, sin(p)], [0, 1, 0], [-sin(p), 0, cos(p)]]) #PITCH
+        R_z = Matrix([[cos(y), -sin(y), 0], [sin(y), cos(y), 0], [0, 0, 1]]) #YAW
 
         # Initialize service response
         joint_trajectory_list = []
