@@ -1,32 +1,24 @@
 ## Project: Kinematics Pick & Place
 
-1. Setup your ROS Workspace.
+1. Setup ROS Workspace by creating /catkin_ws workspace.
 
-It was done by creating the /catkin_ws. As mentioned during the course, catkin is the official build system of ROS.
-
-
-2. Download or clone the [project repository](https://github.com/udacity/RoboND-Kinematics-Project) into the ***src*** directory of your ROS Workspace.  
-
-https://github.com/araujodm/RoboND-Kinematics-Project/blob/patch-1/misc_images/ROS%20Workspace.png
-
-
+2. Cloning the [project repository](https://github.com/udacity/RoboND-Kinematics-Project) into the ***src*** directory of your ROS Workspace.  
 
 3. Experiment with the forward_kinematics environment and get familiar with the robot.
 
-https://github.com/araujodm/RoboND-Kinematics-Project/blob/patch-1/misc_images/Forward%20Kinematics.png
-
-
-
 4. Launch in [demo mode](https://classroom.udacity.com/nanodegrees/nd209/parts/7b2fd2d7-e181-401e-977a-6158c77bf816/modules/8855de3f-2897-46c3-a805-628b5ecf045b/lessons/91d017b1-4493-4522-ad52-04a74a01094c/concepts/ae64bb91-e8c4-44c9-adbe-798e8f688193).
 
-https://github.com/araujodm/RoboND-Kinematics-Project/blob/patch-1/misc_images/Kuka%20arm%20demo%20RViz.png
-https://github.com/araujodm/RoboND-Kinematics-Project/blob/patch-1/misc_images/kuka%20arm%20demo%20Gazebo.png
-
-
 5. Perform Kinematic Analysis for the robot following the [project rubric](https://review.udacity.com/#!/rubrics/972/view).
-
 Check out DH table here:
-https://github.com/araujodm/RoboND-Kinematics-Project/blob/patch-1/misc_images/DH_Table.pdf
+
+  # DH Parameters
+        DH_Table = {alpha0:     0,  a0:      0, d1:  0.75, q1:         q1,
+                    alpha1: -pi/2,  a1:   0.35, d2:     0, q2: -pi/2 + q2,
+                    alpha2:     0,  a2:   1.25, d3:     0, q3:         q3,
+                    alpha3: -pi/2,  a3: -0.054, d4:   1.5, q4:         q4,
+                    alpha4:  pi/2,  a4:      0, d5:     0, q5:         q5,
+                    alpha5: -pi/2,  a5:      0, d6:     0, q6:         q6,
+                    alpha6:     0,  a6:      0, d7: 0.303, q7:          0}
 
 Here a screenshot from the urdf file:
 https://github.com/araujodm/RoboND-Kinematics-Project/blob/patch-1/misc_images/kuka_arm_xacro_urdf.png
@@ -51,12 +43,7 @@ The generalized homogeneous transform between base_link and gripper_link using o
 
     T0_EE = T0_1 * T1_2 * T2_3 * T3_4 * T4_5 * T5_6 * T6_EE
 
-Before define each rotation matrix, I have reviewed the basic concept by watching some classes from www.khanacademy.org.
-See some examples on these screenshots:
-https://github.com/araujodm/RoboND-Kinematics-Project/blob/patch-1/misc_images/Rotation%20in%20R2.png
-https://github.com/araujodm/RoboND-Kinematics-Project/blob/patch-1/misc_images/Rotation%20in%20R3.png
 
-Now, it's clear to me how to get the new vector after its rotation according given theta angle. (Forward Kinematics)
 
 Then, here we have each rotation matrix:
 
@@ -74,66 +61,49 @@ Then, here we have each rotation matrix:
     ROT_z = Matrix([[  cos(y), -sin(y),      0]
                     [  sin(y),  cos(y),      0]
                     [       0,       0,      1]]) # YAW
-                    
-                    
-                    
-Considering there is a distance of 0.303m between WC and EE (End-Effector):
+                   	
+############    IK code start HERE   ####################
+# Calculate joint angles using Geometric IK method
+# Calculating positions of the wrist center
 
-    ROT_EE = ROT_z * ROT_y * ROT_x
-    
-    ROT_Error = ROT_z.subs(y,radians(180)*ROT_y.subs(p,radians(-90)))
+            
+   ROT_EE = R_z*R_y*R_x
 
-    ROT_EE = ROT_EE * ROT_Error       ===>>>> product = translation
+# Compensate for rotation discrepancy between DH parameters and Gazebo
+   
+   Rot_correction = R_z.subs(y,pi)*R_y.subs(p,-pi/2)
 
-    ROT_EE =  ROT_EE.subs({'r': roll, 'p': pitch, 'y': yaw})
+   ROT_EE = ROT_EE * Rot_correction
+   ROT_EE = ROT_EE.subs({'r': roll, 'p': pitch, 'y': yaw})
 
-    EE = Matrix ([[px],
-                  [py],
-                  [pz]])
+   end_effector_pos = Matrix([px, py, pz])
+   wrist_center = end_effector_pos - (0.303) * ROT_EE[:,2]
 
-    WC = EE - 0.303 * ROT_EE[:,2]     ====>>>          WC = ([[px], -  ( 0.303 * ROT_ EE[:,2])  => EE transladed by 0.303m  
-                                                              [py],
-                                                              [pz]])
-                                                              
-                                                              
+   Wx, Wy, Wz = wrist_center[0], wrist_center[1], wrist_center[2]
 
-    
+# SS triangle for theta2 and theta3
+  side_a = 1.50
+  side_b = sqrt(pow(sqrt(Wx**2 + Wy**2) - 0.35,2) + pow((Wz - 0.75),2))
+  side_c = 1.25
 
-6. Fill in th_e `IK_server.py` with your Inverse Kinematics code. 
+  angle_a = acos((side_b**2 + side_c**2 - side_a**2)/(2*side_b*side_c))
+  angle_b = acos((side_a**2 + side_c**2 - side_b**2)/(2*side_a*side_c))
+  angle_c = acos((side_a**2 + side_b**2 + side_c**2)/(2*side_a*side_b))
 
-Here is my code:
-https://github.com/araujodm/RoboND-Kinematics-Project/blob/patch-1/IK_server.py
+# Finding the first three joint angles using trigonometry
+  theta1 = atan2(Wy, Wx)
+  theta2 = pi/2 - angle_a - atan2((Wz - 0.75), sqrt(Wx**2 + Wy**2) - 0.35)
+  theta3 = pi/2 - angle_b + 0.036
 
-And comments below:
+# Finding the last three joint angles 4, 5, 6
+  R0_3 = T0_1[0:3,0:3]*T1_2[0:3,0:3]*T2_3[0:3,0:3]
+  R0_3 = R0_3.evalf(subs={q1:theta1, q2:theta2, q3:theta3})
+           
+  R3_6 = R0_3.inv('LU') * ROT_EE
 
-	theta1 = atan2(WC[1], WC[0])   =====>>> calculating theta between two vectors BUT I'M NOT SURE ABOUT WC MATRIX.
-
-        #SSS triangule for theta2 and theta3
-
->>> I'M NOT SURE ABOUT WHICH SIDE IS A, B OR C ON THE SERIAL MANIPULATOR. COULD YOU GIVE ME A SHORT EXPLANATION SHOWING HOW DID YOU GET EACH?
-
-        side_a = 1.501
-        side_b = sqrt(pow((sqrt(WC[0]*WC[0] + WC[1]*WC[1]) - 0.35), 2) + pow[(WC[2]-0.75), 2])
-        side_c = 1.25
-
-Laws of cosine:
-
-        angle_a = acos((side_b*side_b + side_c*side_c - side_a*side_a) / (2 * side_b * side_c))
-        angle_b = acos((side_a*side_a + side_c*side_c - side_b*side_b) / (2 * side_a * side_c))
-        angle_c = acos((side_a*side_a + side_b*side_b - side_c*side_c) / (2 * side_a * side_b))
-
-        theta2 = pi/2 - angle_a - atan2(WC[2] - 0.75, sqrt(WC[0]*WC[0] + WC[1]*WC[1] - 0.35))
-        theta3 = pi/2 - (angle_b + 0.036)  #0.036 accounts for sag in link 4 of -0.054
-
-
-        R0_3 = T0_1[0:3, 0:3] * T1_2[0:3, 0:3] * T2_3[0:3, 0:3]
-        R0_3 = R0_3.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
-        R3_6 = R0_3.inv("LU") * ROT_EE
-
-        # EULER ANGLES from rotation matrix
-
-        theta4 = atan2(R3_6[2,2], -R3_6[0, 2])
-        theta5 = atan2(sqrt(R3_6[0, 2]*R3_6[0, 2] + R3_6[2, 2]* R3_6[2, 2]), R3_6[1.25])
-        theta6 = atan2( -R3_6[1, 1], R3_6[1, 0])
-
-
+# Euler angles from rotation matrix
+  theta4 = atan2(R3_6[2,2], -R3_6[0,2])
+  theta5 = atan2(sqrt(R3_6[0,2]**2 + R3_6[2,2]**2), R3_6[1,2])
+  theta6 = atan2(-R3_6[1,1], R3_6[1,0])
+  
+  ############   IK code finish HERE     #########################
