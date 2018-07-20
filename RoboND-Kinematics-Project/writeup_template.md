@@ -20,8 +20,7 @@ Check out DH table here:
                     alpha5: -pi/2,  a5:      0, d6:     0, q6:         q6,
                     alpha6:     0,  a6:      0, d7: 0.303, q7:          0}
 
-Here a screenshot from the urdf file:
-https://github.com/araujodm/RoboND-Kinematics-Project/blob/patch-1/misc_images/kuka_arm_xacro_urdf.png
+# URDF file can be found in the attached PDF file.
 
 Here the individual transformation matrices about each joint:
 
@@ -63,7 +62,8 @@ Then, here we have each rotation matrix:
                     [       0,       0,      1]]) # YAW
                    	
 ############    IK code start HERE   ####################
- Calculate joint angles using Geometric IK method
+
+Calculate joint angles using Geometric IK method
  Calculating positions of the wrist center
 
             ROT_EE = R_z * R_y * R_x
