@@ -11,7 +11,7 @@
 5. Perform Kinematic Analysis for the robot following the [project rubric](https://review.udacity.com/#!/rubrics/972/view).
 Check out DH table here:
 
-  # DH Parameters
+  ### DH Parameters
         DH_Table = {alpha0:     0,  a0:      0, d1:  0.75, q1:         q1,
                     alpha1: -pi/2,  a1:   0.35, d2:     0, q2: -pi/2 + q2,
                     alpha2:     0,  a2:   1.25, d3:     0, q3:         q3,
@@ -63,47 +63,50 @@ Then, here we have each rotation matrix:
                     [       0,       0,      1]]) # YAW
                    	
 ############    IK code start HERE   ####################
-# Calculate joint angles using Geometric IK method
-# Calculating positions of the wrist center
+ Calculate joint angles using Geometric IK method
+ Calculating positions of the wrist center
 
-            
-   ROT_EE = R_z*R_y*R_x
+            ROT_EE = R_z * R_y * R_x
 
-# Compensate for rotation discrepancy between DH parameters and Gazebo
+ Compensate for rotation discrepancy between DH parameters and Gazebo
    
-   Rot_correction = R_z.subs(y,pi)*R_y.subs(p,-pi/2)
+            Rot_correction = R_z.subs(y,pi)*R_y.subs(p,-pi/2)
 
-   ROT_EE = ROT_EE * Rot_correction
-   ROT_EE = ROT_EE.subs({'r': roll, 'p': pitch, 'y': yaw})
+            ROT_EE = ROT_EE * Rot_correction
+            ROT_EE = ROT_EE.subs({'r': roll, 'p': pitch, 'y': yaw})
 
-   end_effector_pos = Matrix([px, py, pz])
-   wrist_center = end_effector_pos - (0.303) * ROT_EE[:,2]
+            end_effector_pos = Matrix([px, py, pz])
+            wrist_center = end_effector_pos - (0.303) * ROT_EE[:,2]
 
-   Wx, Wy, Wz = wrist_center[0], wrist_center[1], wrist_center[2]
+            Wx, Wy, Wz = wrist_center[0], wrist_center[1], wrist_center[2]
 
-# SS triangle for theta2 and theta3
-  side_a = 1.50
-  side_b = sqrt(pow(sqrt(Wx**2 + Wy**2) - 0.35,2) + pow((Wz - 0.75),2))
-  side_c = 1.25
+SS triangle for theta2 and theta3
+         
+            side_a = 1.50
+            side_b = sqrt(pow(sqrt(Wx**2 + Wy**2) - 0.35,2) + pow((Wz - 0.75),2))
+            side_c = 1.25
 
-  angle_a = acos((side_b**2 + side_c**2 - side_a**2)/(2*side_b*side_c))
-  angle_b = acos((side_a**2 + side_c**2 - side_b**2)/(2*side_a*side_c))
-  angle_c = acos((side_a**2 + side_b**2 + side_c**2)/(2*side_a*side_b))
+            angle_a = acos((side_b**2 + side_c**2 - side_a**2)/(2*side_b*side_c))
+            angle_b = acos((side_a**2 + side_c**2 - side_b**2)/(2*side_a*side_c))
+            angle_c = acos((side_a**2 + side_b**2 + side_c**2)/(2*side_a*side_b))
 
-# Finding the first three joint angles using trigonometry
-  theta1 = atan2(Wy, Wx)
-  theta2 = pi/2 - angle_a - atan2((Wz - 0.75), sqrt(Wx**2 + Wy**2) - 0.35)
-  theta3 = pi/2 - angle_b + 0.036
+Finding the first three joint angles using trigonometry
 
-# Finding the last three joint angles 4, 5, 6
-  R0_3 = T0_1[0:3,0:3]*T1_2[0:3,0:3]*T2_3[0:3,0:3]
-  R0_3 = R0_3.evalf(subs={q1:theta1, q2:theta2, q3:theta3})
+            theta1 = atan2(Wy, Wx)
+            theta2 = pi/2 - angle_a - atan2((Wz - 0.75), sqrt(Wx**2 + Wy**2) - 0.35)
+            theta3 = pi/2 - angle_b + 0.036
+
+Finding the last three joint angles 4, 5, 6
+
+            R0_3 = T0_1[0:3,0:3]*T1_2[0:3,0:3]*T2_3[0:3,0:3]
+            R0_3 = R0_3.evalf(subs={q1:theta1, q2:theta2, q3:theta3})
            
-  R3_6 = R0_3.inv('LU') * ROT_EE
+            R3_6 = R0_3.inv('LU') * ROT_EE
 
-# Euler angles from rotation matrix
-  theta4 = atan2(R3_6[2,2], -R3_6[0,2])
-  theta5 = atan2(sqrt(R3_6[0,2]**2 + R3_6[2,2]**2), R3_6[1,2])
-  theta6 = atan2(-R3_6[1,1], R3_6[1,0])
+Euler angles from rotation matrix
+
+            theta4 = atan2(R3_6[2,2], -R3_6[0,2])
+            theta5 = atan2(sqrt(R3_6[0,2]**2 + R3_6[2,2]**2), R3_6[1,2])
+            theta6 = atan2(-R3_6[1,1], R3_6[1,0])
   
   ############   IK code finish HERE     #########################
