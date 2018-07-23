@@ -1,3 +1,15 @@
+#!/usr/bin/env python
+
+# Copyright (C) 2017 Udacity Inc.
+#
+# This file is part of Robotic Arm: Pick and Place project for Udacity
+# Robotics nano-degree program
+#
+# All Rights Reserved.
+
+# Author: Harsh Pandya
+
+# import module
 import rospy
 import tf
 from kuka_arm.srv import *
@@ -86,7 +98,7 @@ def handle_calculate_IK(req):
             # Calculating positions of the wrist center
 
             
-            ROT_EE = R_z*R_y*R_x
+            ROT_EE = R_z * R_y * R_x
 
             # Compensate for rotation discrepancy between DH parameters and Gazebo
             Rot_correction = R_z.subs(y,pi)*R_y.subs(p,-pi/2)
